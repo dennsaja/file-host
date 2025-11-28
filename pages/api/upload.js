@@ -1,13 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import AWS from "aws-sdk";
 
 export const config = {
   api: {
-    bodyParser: false,       // kita kirim RAW file
-    sizeLimit: "50mb",       // batas upload
+    bodyParser: false,
+    sizeLimit: "100mb",
   },
 };
 
-// Helper baca stream body (raw file)
 function readStream(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -25,32 +24,31 @@ export default async function handler(req, res) {
   try {
     const fileBuffer = await readStream(req);
     const filename = req.headers["x-filename"] || "file.bin";
-    const bucket = process.env.SUPABASE_BUCKET;
 
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_KEY
-    );
+    const s3 = new AWS.S3({
+      endpoint: process.env.B2_ENDPOINT,
+      region: process.env.B2_REGION,
+      accessKeyId: process.env.B2_KEY_ID,
+      secretAccessKey: process.env.B2_APP_KEY,
+      signatureVersion: "v4",
+    });
 
-    const filePath = `${Date.now()}-${filename}`;
+    const key = `${Date.now()}-${filename}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, fileBuffer, {
-        contentType: req.headers["content-type"],
-      });
+    const uploadResult = await s3
+      .upload({
+        Bucket: process.env.B2_BUCKET,
+        Key: key,
+        Body: fileBuffer,
+        ContentType: req.headers["content-type"],
+      })
+      .promise();
 
-    if (uploadError) {
-      return res.status(400).json({ error: uploadError.message });
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath);
+    const publicUrl = `https://f002.backblazeb2.com/file/${process.env.B2_BUCKET}/${key}`;
 
     return res.status(200).json({
-      url: publicUrlData.publicUrl,
-      path: filePath,
+      url: publicUrl,
+      path: key,
     });
 
   } catch (e) {
