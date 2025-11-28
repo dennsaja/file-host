@@ -1,21 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 
 export default function Home() {
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [status, setStatus] = useState('');
   const [files, setFiles] = useState([]);
+  const [totalSize, setTotalSize] = useState(0);
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const f = e.target.files[0];
+    setFile(f);
+    setPreview(URL.createObjectURL(f));  // preview image/file
   };
 
+  const loadStats = async () => {
+    const res = await fetch('/api/list');
+    const data = await res.json();
+    setFiles(data.files);
+    setTotalSize(data.totalSize);
+  };
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
   const uploadFile = async () => {
-    if (!file) {
-      alert('Pilih file dulu!');
-      return;
-    }
-    setStatus('Uploading...');
+    if (!file) return alert("Pilih file dulu!");
+
+    setStatus("Uploading...");
 
     try {
       const res = await fetch('/api/upload', {
@@ -30,13 +43,15 @@ export default function Home() {
       const data = await res.json();
 
       if (res.ok) {
-        setStatus('Uploaded ke Supabase!');
-        setFiles(prev => [{ url: data.url, name: data.path }, ...prev]);
+        setStatus("Upload berhasil!");
+        await loadStats();
+        setPreview(null);
       } else {
-        setStatus('Gagal upload: ' + (data?.error || 'unknown'));
+        setStatus("Gagal upload: " + data.error);
       }
-    } catch (err) {
-      setStatus('Gagal upload: ' + err.message);
+
+    } catch (e) {
+      setStatus("Gagal upload: " + e.message);
     }
   };
 
@@ -44,36 +59,10 @@ export default function Home() {
     <>
       <Head>
         <title>Open's API (Demo)</title>
-        <style>{`
-          body {
-            font-family: Arial, sans-serif;
-            background: #f5f7f9;
-            margin: 0;
-            padding: 40px;
-          }
-          .upload-btn {
-            display: inline-block;
-            padding: 10px 16px;
-            background: #fff;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            cursor: pointer;
-            font-weight: 600;
-          }
-          .submit-btn {
-            padding: 10px 16px;
-            background: #222;
-            color: white;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-          }
-        `}</style>
       </Head>
 
       <div style={{ padding: 40, fontFamily: 'Arial' }}>
-        <h1 style={{ fontSize: 32, fontWeight: 700 }}>Open's API (Demo)</h1>
+        <h1>Open's API (Demo)</h1>
 
         {/* GRID STATS */}
         <div style={{
@@ -89,7 +78,9 @@ export default function Home() {
 
           <div style={{ padding: 20, background: '#fff', borderRadius: 12 }}>
             <h3>Total Size</h3>
-            <p style={{ fontSize: 28 }}>0.00 KB</p>
+            <p style={{ fontSize: 28 }}>
+              {(totalSize / 1024).toFixed(2)} KB
+            </p>
           </div>
 
           <div style={{ padding: 20, background: '#fff', borderRadius: 12 }}>
@@ -108,14 +99,37 @@ export default function Home() {
         }}>
           <h2>Upload File</h2>
 
-          <label className="upload-btn">
+          <label style={{
+            display: 'inline-block',
+            padding: '10px 16px',
+            background: '#fff',
+            borderRadius: 8,
+            border: '1px solid #ddd',
+            cursor: 'pointer',
+            fontWeight: 600
+          }}>
             Pilih File
             <input type="file" onChange={handleFileChange} style={{ display: 'none' }} />
           </label>
 
-          <button className="submit-btn" onClick={uploadFile} style={{ marginLeft: 12 }}>
+          <button style={{
+            padding: '10px 16px',
+            background: '#222',
+            color: '#fff',
+            borderRadius: 8,
+            border: 'none',
+            cursor: 'pointer',
+            marginLeft: 12
+          }} onClick={uploadFile}>
             Upload
           </button>
+
+          {preview && (
+            <div style={{ marginTop: 20 }}>
+              <h4>Preview:</h4>
+              <img src={preview} style={{ maxWidth: 300, borderRadius: 10 }} />
+            </div>
+          )}
 
           <p style={{ marginTop: 12 }}>{status}</p>
         </div>
