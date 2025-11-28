@@ -1,0 +1,26 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7f9;
+  margin: 0;
+  padding: 40px;
+}
+
+.upload-btn {
+  display: inline-block;
+  padding: 10px 16px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.submit-btn {
+  padding: 10px 16px;
+  background: #222;
+  color: white;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
