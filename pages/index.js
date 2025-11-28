@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import '../public/styles.css';
 
 export default function Home() {
   const [file, setFile] = useState(null);
@@ -42,6 +41,34 @@ export default function Home() {
   };
 
   return (
+    <style>
+    body {
+  font-family: Arial, sans-serif;
+  background: #f5f7f9;
+  margin: 0;
+  padding: 40px;
+}
+
+.upload-btn {
+  display: inline-block;
+  padding: 10px 16px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.submit-btn {
+  padding: 10px 16px;
+  background: #222;
+  color: white;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+  </style>
     <div style={{ padding: 40, fontFamily: 'Arial' }}>
       <Head>
         <title>Open's API (Demo)</title>
